@@ -32,4 +32,5 @@ added_path = os.path.abspath(os.path.join(cwd, os.path.dirname(args.file)))
 sys.path = [added_path] + sys.path
 
 with open(args.file) as f:
-    exec(f.read())
+    code = compile(f.read(), args.file, 'exec')
+    exec(code)
