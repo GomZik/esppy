@@ -1,0 +1,35 @@
+import os
+import sys
+import argparse
+import importlib
+from multiprocessing import cpu_count
+
+
+class Pid:
+    def __init__(self, module_name, function_name, args, kwargs):
+        module = importlib.import_module(module_name)
+        func = getattr(module, function_name)
+        func(*args, **kwargs)
+
+
+def _spawn(module_name, function_name, *args, **kwargs):
+    return Pid(module_name, function_name, args, kwargs)
+
+
+__builtins__.spawn = _spawn
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('file')
+parser.add_argument('--master', action='store_true', default=True)
+parser.add_argument('--slave', action='store_true', default=False)
+parser.add_argument('-w', '--workers', default=cpu_count(), type=int)
+args = parser.parse_args()
+print(args)
+
+cwd = os.getcwd()
+added_path = os.path.abspath(os.path.join(cwd, os.path.dirname(args.file)))
+sys.path = [added_path] + sys.path
+
+with open(args.file) as f:
+    exec(f.read())

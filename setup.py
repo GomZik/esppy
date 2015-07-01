@@ -10,5 +10,6 @@ setup(
     description='Erlang style process for python',
     license='MIT',
     packages=['esppy'],
-    long_description=''
+    long_description='',
+    scripts=['esppy/esppy']
 )
