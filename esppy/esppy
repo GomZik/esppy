@@ -1,15 +1,11 @@
+#!/usr/bin/env python3
+
 import os
 import sys
 import argparse
-import importlib
 from multiprocessing import cpu_count
-
-
-class Pid:
-    def __init__(self, module_name, function_name, args, kwargs):
-        module = importlib.import_module(module_name)
-        func = getattr(module, function_name)
-        func(*args, **kwargs)
+from esppy.pid import Pid
+from esppy.supervisor import Supervisor
 
 
 def _spawn(module_name, function_name, *args, **kwargs):
@@ -31,6 +27,5 @@ cwd = os.getcwd()
 added_path = os.path.abspath(os.path.join(cwd, os.path.dirname(args.file)))
 sys.path = [added_path] + sys.path
 
-with open(args.file) as f:
-    code = compile(f.read(), args.file, 'exec')
-    exec(code)
+supervisor = Supervisor(args)
+supervisor.run()
