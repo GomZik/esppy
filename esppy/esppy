@@ -6,6 +6,16 @@ import argparse
 from multiprocessing import cpu_count
 from esppy.pid import Pid
 from esppy.supervisor import Supervisor
+from random import choice
+from string import ascii_letters as letters
+
+
+def make_cookie():
+    result = []
+    for i in range(8):
+        result.append(choice(letters))
+
+    return ''.join(result)
 
 
 def _spawn(module_name, function_name, *args, **kwargs):
@@ -15,12 +25,24 @@ def _spawn(module_name, function_name, *args, **kwargs):
 __builtins__.spawn = _spawn
 
 
+class ConfigurationError(Exception):
+    pass
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument('file')
-parser.add_argument('--master', action='store_true', default=True)
 parser.add_argument('--slave', action='store_true', default=False)
 parser.add_argument('-w', '--workers', default=cpu_count(), type=int)
+parser.add_argument('-p', '--port', default=32592, type=int)
+parser.add_argument('-c', '--cookie', type=str, default=make_cookie())
+parser.add_argument('-d', '--disable-nodes', action='store_true',
+                    default=False)
 args = parser.parse_args()
+
+if args.slave and args.disable_nodes:
+    raise ConfigurationError('--slave and --disable-nodes can\'not used '
+                             'together')
+
 print(args)
 
 cwd = os.getcwd()
