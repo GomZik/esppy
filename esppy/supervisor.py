@@ -11,6 +11,7 @@ class Supervisor:
         self.workers = []
         self.nodes = []
         self.master = None
+        self.broadcast_task = None
 
     def run(self):
         for i in range(self.args.workers):
@@ -22,7 +23,22 @@ class Supervisor:
             else:
                 self.wait_bradcast()
 
-        self.loop.add_signal_handler(signal.SIGINT, lambda: self.loop.stop())
+        def stop():
+            @asyncio.coroutine
+            def _stop():
+                print('\nGraceful shutdown')
+                tasks = []
+                for worker in self.workers:
+                    tasks.append(asyncio.Task(worker.kill()))
+                if self.broadcast_task is not None:
+                    self.broadcast_task.cancel()
+                    yield from asyncio.wait([self.broadcast_task])
+                yield from asyncio.wait(tasks)
+                self.loop.stop()
+
+            asyncio.async(_stop())
+
+        self.loop.add_signal_handler(signal.SIGINT, stop)
         self.loop.run_forever()
 
     def wait_bradcast(self):
@@ -38,7 +54,7 @@ class Supervisor:
             socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         broadcast_socket.bind(('', 0))
 
-        asyncio.async(self.broadcast(broadcast_socket))
+        self.broadcast_task = asyncio.Task(self.broadcast(broadcast_socket))
 
         self.loop.run_until_complete(
             asyncio.start_server(

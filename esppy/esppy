@@ -18,13 +18,6 @@ def make_cookie():
     return ''.join(result)
 
 
-def _spawn(module_name, function_name, *args, **kwargs):
-    return Pid(module_name, function_name, args, kwargs)
-
-
-__builtins__.spawn = _spawn
-
-
 class ConfigurationError(Exception):
     pass
 
@@ -50,4 +43,10 @@ added_path = os.path.abspath(os.path.join(cwd, os.path.dirname(args.file)))
 sys.path = [added_path] + sys.path
 
 supervisor = Supervisor(args)
+
+
+def _spawn(module_name, function_name, *args, **kwargs):
+    return Pid(module_name, function_name, args, kwargs)
+__builtins__.spawn = _spawn
+
 supervisor.run()

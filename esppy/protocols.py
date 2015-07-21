@@ -1,36 +1,80 @@
-import enum
 import asyncio
 
 
 EOL_MARKER = '\n'
 
 
-class MsgType(enum.Enum):
+class MsgType:
     PING = '/ping'
     PONG = '/pong'
 
 
-class WorkerProtocol:
-    def __init__(self, read, write):
-        self._read_transport = read
-        self._write_transport = write
+class WorkerProtocol(asyncio.Protocol):
 
-    @asyncio.coroutine
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._buffer = []
+        self._writer = self._feed_data()
+        self._callbacks = []
+        next(self._writer)
+
+    def _feed_data(self):
+        while True:
+            chunk = yield
+            if chunk:
+                data = chunk.decode('utf-8').split(EOL_MARKER)
+                data = list(filter(None, data))
+                self._buffer += data
+
+                while self._callbacks:
+                    if self._buffer:
+                        msg = self._buffer[0]
+                        self._buffer = self._buffer[1:]
+                        callback = self._callbacks[0]
+                        self._callbacks = self._callbacks[1:]
+                        callback(msg)
+                    else:
+                        break
+
+    def connection_made(self, transport):
+        self.transport = transport
+
+    def connection_lost(self, exc):
+        super().connection_lost(exc)
+
+    def data_received(self, data):
+        self._writer.send(data)
+
+    def eof_received(self):
+        super().eof_received()
+
     def write(self, data):
         data = (str(data) + EOL_MARKER).encode('utf-8')
-        self._write_transport.write(data)
-        yield from self._write_transport.drain()
+        self.transport.write(data)
 
-    @asyncio.coroutine
+    def _make_callback(self, future):
+        def _callback(data):
+            future.set_result(data)
+
+        return _callback
+
     def read(self):
-        data = yield from self._read_transport.readline()
-        data = data.decode('utf-8').replace(EOL_MARKER)
-        return data
+        future = asyncio.Future()
 
-    @asyncio.coroutine
+        if self._buffer:
+            msg = self._buffer[0]
+            self._buffer = self._buffer[1:]
+            future.set_result(msg)
+        else:
+            self._callbacks.append(self._make_callback(future))
+
+        return future
+
     def ping(self):
-        yield from self.write(MsgType.PING)
+        self.write(MsgType.PING)
 
-    @asyncio.coroutine
     def pong(self):
         self.write(MsgType.PONG)
+
+    def close(self):
+        self.transport.close()
