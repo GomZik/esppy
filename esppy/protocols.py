@@ -39,14 +39,8 @@ class WorkerProtocol(asyncio.Protocol):
     def connection_made(self, transport):
         self.transport = transport
 
-    def connection_lost(self, exc):
-        super().connection_lost(exc)
-
     def data_received(self, data):
         self._writer.send(data)
-
-    def eof_received(self):
-        super().eof_received()
 
     def write(self, data):
         data = (str(data) + EOL_MARKER).encode('utf-8')

@@ -52,7 +52,7 @@ class Worker:
     @asyncio.coroutine
     def heartbeat(self):
         while self._started:
-            yield from asyncio.sleep(15)
+            yield from asyncio.sleep(5)
             if (time.monotonic() - self.ping < 30):
                 self.writer.ping()
             else:
@@ -71,6 +71,7 @@ class Worker:
                 yield from self.kill()
                 self.start()
                 return
+
             if msg == MsgType.PONG:
                 self.ping = time.monotonic()
 

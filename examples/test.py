@@ -4,3 +4,4 @@ def target(a):
 
 if __name__ == '__main__':
     pid = spawn('test', 'target', 'test')
+    pid % 'Hello, world'

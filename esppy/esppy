@@ -46,6 +46,12 @@ supervisor = Supervisor(args)
 
 
 def _spawn(module_name, function_name, *args, **kwargs):
+    """
+    Spawn lightweight process (coroutine) on awailable
+    (remote or local) worker
+
+    :param module_name:
+    """
     return Pid(module_name, function_name, args, kwargs)
 __builtins__.spawn = _spawn
 
