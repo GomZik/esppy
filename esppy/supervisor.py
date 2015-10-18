@@ -2,6 +2,7 @@ import asyncio
 import signal
 from esppy.worker import Worker
 import socket
+from . import web
 
 
 class Supervisor:
@@ -37,6 +38,9 @@ class Supervisor:
                 self.loop.stop()
 
             asyncio.async(_stop())
+            
+        if not self.args.no_web:
+            self.attach_web_monitoring()
 
         self.loop.add_signal_handler(signal.SIGINT, stop)
         self.loop.run_forever()
@@ -109,3 +113,6 @@ class Supervisor:
     @asyncio.coroutine
     def handle_node(self, reader, writer):
         pass
+        
+    def attach_web_monitoring(self):
+        self.web_monitoring = self.loop.run_until_complete(web.make_server())
