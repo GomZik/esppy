@@ -30,6 +30,7 @@ parser.add_argument('-p', '--port', default=32592, type=int)
 parser.add_argument('-c', '--cookie', type=str, default=make_cookie())
 parser.add_argument('-d', '--disable-nodes', action='store_true',
                     default=False)
+parser.add_argument('--no-web', action='store_true', default=False)
 args = parser.parse_args()
 
 if args.slave and args.disable_nodes:
